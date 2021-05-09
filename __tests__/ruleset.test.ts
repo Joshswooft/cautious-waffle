@@ -1,13 +1,9 @@
-// Import your code here 
-
-import { checkRelationships, makeRelationshipSet } from "../src/ruleset";
-
-// var s, selected;
+import { RuleSet } from "../src/ruleset";
 
 describe('Ruleset', () => {
   test('it should make an empty rule set', () => {
-    const graph = makeRelationshipSet();
-    expect(graph.getNodes().length).toBe(0);
+    const rs = new RuleSet();
+    expect(rs.graph.getNodes().length).toBe(0);
   });
 
   // ??
@@ -17,27 +13,30 @@ describe('Ruleset', () => {
 
   // "A depends on B", or "for A to be selected, B needs to be selected"
   test('should create a dependency between A and B', () => {
-    const graph = makeRelationshipSet();
-    const A = graph.insert({name: 'A'});
-    const B = graph.insert({name: 'B'})
-    graph.addEdge(A, B);
-    expect(checkRelationships(graph)).toBe(true);
+    const rs = new RuleSet();
+    const A = {name: 'A'}
+    const B = { name: 'B' }
+
+    rs.AddDep(A, B);
+
+    expect(rs.IsCoherent()).toBe(true);
   });
 
   // "for A to be selected, B needs to be unselected; and for B to be selected, A needs to be unselected"
   test('should create a new conflict between A and B', () => {
-    const graph = makeRelationshipSet();
-    const A = graph.insert({name: 'A', conflicts: ['B']});
-    const B = graph.insert({name: 'B', conflicts: ['A'] });
+    const rs = new RuleSet();
+    const A = {name: 'A', conflicts: ['B']};
+    const B = {name: 'B', conflicts: ['A'] };
+
+    rs.AddDep(A, B)
     
-    graph.addEdge(A, B)
-    const nodes = graph.getNodes();
+    const nodes = rs.graph.getNodes();
 
     nodes.map(n => {
       expect(n.conflicts?.length).toBe(1);
     })
 
-    expect(checkRelationships(graph)).toBe(false);
+    expect(rs.IsCoherent()).toBe(false);
 
   });
 
@@ -45,49 +44,52 @@ describe('Ruleset', () => {
   // mutually exclusive - implementing one will automatically rule out the other
   // I.e. if the above laws hold then the graph is coherent
   test('the data structure should be coherent: ABC (conflicts: CD)', () => {
-    const graph = makeRelationshipSet();
-    const A = graph.insert({name: 'A'});
-    const B = graph.insert({name: 'B'})
+    const rs = new RuleSet();
+    const A = {name: 'A'};
+    const B = {name: 'B'};
     // A depends on B
-    graph.addEdge(A, B);
+    rs.AddDep(A, B);
 
     // B depends on C
-    const C = graph.insert({ name: 'C', conflicts: ['D']});
-    graph.addEdge(B, C);
+    const C = { name: 'C', conflicts: ['D']};
+    
+    rs.AddDep(B, C);
 
-    graph.insert({name: 'D', conflicts: ['C'] });
+    const D = {name: 'D', conflicts: ['C'] };
 
-    expect(checkRelationships(graph)).toBe(true);
+    rs.graph.insert(D);
+
+    expect(rs.IsCoherent()).toBe(true);
 
   });
 
   test('should be coherent: ABCA DE (conflicts: CE)', () => {
-    const graph = makeRelationshipSet();
-    const A = graph.insert({name: 'A'});
-    const B = graph.insert({name: 'B'});
-    const C = graph.insert({name: 'C', conflicts: ['E']});
-    const D = graph.insert({name: 'D'});
-    const E = graph.insert({name: 'E', conflicts: ['C']});
+    const rs = new RuleSet();
+    const A = {name: 'A'};
+    const B = {name: 'B'};
+    const C = {name: 'C', conflicts: ['E']};
+    const D = {name: 'D'};
+    const E = {name: 'E', conflicts: ['C']};
 
-    graph.addEdge(A, B);
-    graph.addEdge(B, C);
-    graph.addEdge(C, A);
-    graph.addEdge(D, E);
+    rs.AddDep(A, B);
+    rs.AddDep(B, C);
+    rs.AddDep(C, A);
+    rs.AddDep(D, E);
 
-    expect(checkRelationships(graph)).toBe(true);
+    expect(rs.IsCoherent()).toBe(true);
 
   });
 
   test('should be incoherent: ABC (conflicts: CA)', () => {
-    const graph = makeRelationshipSet();
-    const A = graph.insert({name: 'A', conflicts: ['C']});
-    const B = graph.insert({name: 'B'})
-    const C = graph.insert({name: 'C', conflicts: ['A']});
+    const rs = new RuleSet();
+    const A = {name: 'A', conflicts: ['C']};
+    const B = {name: 'B'};
+    const C = {name: 'C', conflicts: ['A']};
     // A depends on B
-    graph.addEdge(A, B);
-    graph.addEdge(B, C);
+    rs.AddDep(A, B);
+    rs.AddDep(B, C);
 
-    expect(checkRelationships(graph)).toBe(false);
+    expect(rs.IsCoherent()).toBe(false);
   });
 
   // // Deep dependencies
@@ -101,21 +103,21 @@ describe('Ruleset', () => {
 // console.assert(!checkRelationships(s));
   test('deep relationships - should be incoherent for ABCDE AF (conflicts: FE)', () => {
 
-    const g = makeRelationshipSet();
-    const A = g.insert({name: 'A'});
-    const B = g.insert({name: 'B'});
-    const C = g.insert({name: 'C'});
-    const D = g.insert({name: 'D'});
-    const E = g.insert({name: 'E', conflicts: ['F']});
-    const F = g.insert({name: 'F', conflicts: ['E']});
+    const rs = new RuleSet();
+    const A = {name: 'A'};
+    const B = {name: 'B'};
+    const C = {name: 'C'};
+    const D = {name: 'D'};
+    const E = {name: 'E', conflicts: ['F']};
+    const F = {name: 'F', conflicts: ['E']};
 
-    g.addEdge(A, B);
-    g.addEdge(B, C);
-    g.addEdge(C, D);
-    g.addEdge(D, E);
-    g.addEdge(A, F);
+    rs.AddDep(A, B);
+    rs.AddDep(B, C);
+    rs.AddDep(C, D);
+    rs.AddDep(D, E);
+    rs.AddDep(A, F);
 
-    expect(checkRelationships(g)).toBe(false);
+    expect(rs.IsCoherent()).toBe(false);
 
   });
 
@@ -128,7 +130,9 @@ describe('Ruleset', () => {
     test('when toggled OFF it should UNSET a package p for a collection of selected packages', () => {});
 
 
-    test('should return a list of current selected packages', () => {});
+    test('should return a list of current selected packages', () => {
+
+    });
 
   });
 
