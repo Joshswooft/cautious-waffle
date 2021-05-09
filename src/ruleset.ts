@@ -1,13 +1,13 @@
 import { DirectedAcyclicGraph, DirectedGraph } from 'typescript-graph'
+import { NodeType, Package } from './package';
 
 // Create the graph
-type NodeType = { name: string, conflicts?: Array<string> }
 
 export function makeRelationshipSet(acyclic?: boolean): DirectedAcyclicGraph<NodeType> | DirectedGraph<NodeType> {
     if (acyclic) {
         return new DirectedAcyclicGraph<NodeType>((n: NodeType) => n.name)
     }
-    return new DirectedGraph<NodeType>((n: NodeType) => n.name)
+    return new Package((n: NodeType) => n.name)
 }
 
 export function getTopologicallySortedSet(graph: DirectedAcyclicGraph<NodeType>): any[] {
@@ -15,10 +15,16 @@ export function getTopologicallySortedSet(graph: DirectedAcyclicGraph<NodeType>)
     return graph.topologicallySortedNodes() // returns roughly [{ name: 'node1' }, { name: 'node3' }, { name: 'node5' }, { name: 'node2' }, { name: 'node4' }]
 }
 
+
+export function getSelectedPackages(graph: DirectedAcyclicGraph<NodeType> | DirectedGraph<NodeType>): string[] {
+    return graph.getNodes().filter(n => n.selected === true).map(n => n.name);
+}
+
 // checks that the graph is coherent
 // coherent - no option can depend, directly or indirectly, on another package and also be mutually exclusive with it.
 // mutually exclusive - implementing one will automatically rule out the other
 export function checkRelationships(graph: DirectedAcyclicGraph<NodeType> | DirectedGraph<NodeType>): boolean {
+    console.log('graph: ', graph);
     const nodes = graph.getNodes();
     const nodesWithConflicts = nodes.filter(n => n.conflicts?.length > 0);
     
