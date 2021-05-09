@@ -15,10 +15,10 @@ export class Package extends DirectedGraph<NodeType> {
 
     /**
      * 
-     * @returns a list of selected packages
+     * @returns a list of selected packages along with its dependencies
      */
     StringSlice(): string[] {
-        return this.getNodes().filter(n => n.selected === true).map(n => n.name)
+        return this.getNodes().filter(n => n.selected === true).flatMap(n => this.getSubGraphStartingFrom(n.name).getNodes().map( no => no.name))
     }
 
     /**

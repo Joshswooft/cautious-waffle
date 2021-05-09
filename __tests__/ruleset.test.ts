@@ -1,3 +1,4 @@
+import { NodeType } from "../src/package";
 import { RuleSet } from "../src/ruleset";
 
 describe('Ruleset', () => {
@@ -14,8 +15,8 @@ describe('Ruleset', () => {
   // "A depends on B", or "for A to be selected, B needs to be selected"
   test('should create a dependency between A and B', () => {
     const rs = new RuleSet();
-    const A = {name: 'A'}
-    const B = { name: 'B' }
+    const A: NodeType = {name: 'A'}
+    const B: NodeType = { name: 'B' }
 
     rs.AddDep(A, B);
 
@@ -25,8 +26,8 @@ describe('Ruleset', () => {
   // "for A to be selected, B needs to be unselected; and for B to be selected, A needs to be unselected"
   test('should create a new conflict between A and B', () => {
     const rs = new RuleSet();
-    const A = {name: 'A', conflicts: ['B']};
-    const B = {name: 'B', conflicts: ['A'] };
+    const A: NodeType = {name: 'A', conflicts: ['B']};
+    const B: NodeType = {name: 'B', conflicts: ['A'] };
 
     rs.AddDep(A, B)
     
@@ -45,17 +46,17 @@ describe('Ruleset', () => {
   // I.e. if the above laws hold then the graph is coherent
   test('the data structure should be coherent: ABC (conflicts: CD)', () => {
     const rs = new RuleSet();
-    const A = {name: 'A'};
-    const B = {name: 'B'};
+    const A: NodeType = {name: 'A'};
+    const B: NodeType = {name: 'B'};
     // A depends on B
     rs.AddDep(A, B);
 
     // B depends on C
-    const C = { name: 'C', conflicts: ['D']};
+    const C: NodeType = { name: 'C', conflicts: ['D']};
     
     rs.AddDep(B, C);
 
-    const D = {name: 'D', conflicts: ['C'] };
+    const D: NodeType = {name: 'D', conflicts: ['C'] };
 
     rs.graph.insert(D);
 
@@ -65,11 +66,11 @@ describe('Ruleset', () => {
 
   test('should be coherent: ABCA DE (conflicts: CE)', () => {
     const rs = new RuleSet();
-    const A = {name: 'A'};
-    const B = {name: 'B'};
-    const C = {name: 'C', conflicts: ['E']};
-    const D = {name: 'D'};
-    const E = {name: 'E', conflicts: ['C']};
+    const A: NodeType = {name: 'A'};
+    const B: NodeType = {name: 'B'};
+    const C: NodeType = {name: 'C', conflicts: ['E']};
+    const D: NodeType = {name: 'D'};
+    const E: NodeType = {name: 'E', conflicts: ['C']};
 
     rs.AddDep(A, B);
     rs.AddDep(B, C);
@@ -82,9 +83,9 @@ describe('Ruleset', () => {
 
   test('should be incoherent: ABC (conflicts: CA)', () => {
     const rs = new RuleSet();
-    const A = {name: 'A', conflicts: ['C']};
-    const B = {name: 'B'};
-    const C = {name: 'C', conflicts: ['A']};
+    const A: NodeType = {name: 'A', conflicts: ['C']};
+    const B: NodeType = {name: 'B'};
+    const C: NodeType = {name: 'C', conflicts: ['A']};
     // A depends on B
     rs.AddDep(A, B);
     rs.AddDep(B, C);
@@ -104,12 +105,12 @@ describe('Ruleset', () => {
   test('deep relationships - should be incoherent for ABCDE AF (conflicts: FE)', () => {
 
     const rs = new RuleSet();
-    const A = {name: 'A'};
-    const B = {name: 'B'};
-    const C = {name: 'C'};
-    const D = {name: 'D'};
-    const E = {name: 'E', conflicts: ['F']};
-    const F = {name: 'F', conflicts: ['E']};
+    const A: NodeType = {name: 'A'};
+    const B: NodeType = {name: 'B'};
+    const C: NodeType = {name: 'C'};
+    const D: NodeType = {name: 'D'};
+    const E: NodeType = {name: 'E', conflicts: ['F']};
+    const F: NodeType = {name: 'F', conflicts: ['E']};
 
     rs.AddDep(A, B);
     rs.AddDep(B, C);
@@ -123,15 +124,38 @@ describe('Ruleset', () => {
 
   describe('given the rules between packages, a package, and a collection of selected packages coherent with the rules', () => {
 
-    test('returns a new (empty) collection of selected packages (Pkgs) for the rule set rs.', () => {});
-
     test('when toggled ON it should SET a package p for a collection of selected packages', () => {});
 
     test('when toggled OFF it should UNSET a package p for a collection of selected packages', () => {});
 
+    // because A is selected we have to include all its dependencies
+    test('should return a list of current selected packages along with its dependencies', () => {
+      const rs = new RuleSet();
+      const A: NodeType = {name: 'A', selected: true};
+      const B: NodeType = {name: 'B'};
+      const C: NodeType = {name: 'C'};
+      const D: NodeType = {name: 'D'};
 
-    test('should return a list of current selected packages', () => {
+      rs.AddDep(A, B);
+      rs.AddDep(A, C);
+      rs.AddDep(A, C);
+      rs.AddDep(A, D);
 
+      expect(rs.graph.StringSlice()).toMatchObject(['A', 'B', 'C', 'D']);
+    });
+
+    test('should return selected package', () => {
+      const rs = new RuleSet();
+      const A: NodeType = {name: 'A'};
+      const B: NodeType = {name: 'B'};
+      const C: NodeType = {name: 'C'};
+
+      rs.AddDep(A, B);
+      rs.AddDep(B, C);
+
+      rs.graph.Toggle(C);
+
+      expect(rs.graph.StringSlice()).toMatchObject(['C']);
     });
 
   });
