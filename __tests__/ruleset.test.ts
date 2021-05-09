@@ -1,10 +1,13 @@
 // Import your code here 
 
-var s, selected;
+import { checkRelationships, makeRelationshipSet } from "../src/ruleset";
+
+// var s, selected;
 
 describe('Ruleset', () => {
   test('it should make an empty rule set', () => {
-
+    const graph = makeRelationshipSet();
+    expect(graph.getNodes().length).toBe(0);
   });
 
   // ??
@@ -12,18 +15,60 @@ describe('Ruleset', () => {
 
   });
 
+  // "A depends on B", or "for A to be selected, B needs to be selected"
   test('should create a dependency between A and B', () => {
-
+    const graph = makeRelationshipSet();
+    const A = graph.insert({name: 'A'});
+    const B = graph.insert({name: 'B'})
+    graph.addEdge(A, B);
+    expect(checkRelationships(graph)).toBe(true);
   });
 
+  // "for A to be selected, B needs to be unselected; and for B to be selected, A needs to be unselected"
   test('should create a new conflict between A and B', () => {
+    const graph = makeRelationshipSet();
+    graph.insert({name: 'A', conflicts: ['B']});
+    graph.insert({name: 'B', conflicts: ['A'] });
+
+    const nodes = graph.getNodes();
+
+    nodes.map(n => {
+      expect(n.conflicts?.length).toBe(1);
+    })
 
   });
 
   // coherent - no option can depend, directly or indirectly, on another package and also be mutually exclusive with it.
   // mutually exclusive - implementing one will automatically rule out the other
+  // I.e. if the above laws hold then the graph is coherent
   test('the data structure should be coherent', () => {
+    const graph = makeRelationshipSet();
+    const A = graph.insert({name: 'A'});
+    const B = graph.insert({name: 'B'})
+    // A depends on B
+    graph.addEdge(A, B);
 
+    // B depends on C
+    const C = graph.insert({ name: 'C', conflicts: ['D']});
+    graph.addEdge(B, C);
+
+    graph.insert({name: 'D', conflicts: ['C'] });
+    console.log(graph);
+
+    expect(checkRelationships(graph)).toBe(true);
+
+  });
+
+  test('should be incoherent', () => {
+    const graph = makeRelationshipSet();
+    const A = graph.insert({name: 'A', conflicts: ['C']});
+    const B = graph.insert({name: 'B'})
+    const C = graph.insert({name: 'C', conflicts: ['A']});
+    // A depends on B
+    graph.addEdge(A, B);
+    graph.addEdge(B, C);
+
+    expect(checkRelationships(graph)).toBe(false);
   });
 
   test('it should work for deep relationships', () => {
