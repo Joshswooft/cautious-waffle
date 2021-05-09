@@ -32,7 +32,6 @@
   "author": "Jakub Synowiec <github@jakubsynowiec.info>",
   "license": "Apache-2.0",
   "dependencies": {
-    "object-hash": "^2.1.1",
     "tslib": "~2.2.0",
     "typescript-graph": "^0.2.1"
   },
