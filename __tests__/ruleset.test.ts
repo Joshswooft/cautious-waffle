@@ -27,21 +27,24 @@ describe('Ruleset', () => {
   // "for A to be selected, B needs to be unselected; and for B to be selected, A needs to be unselected"
   test('should create a new conflict between A and B', () => {
     const graph = makeRelationshipSet();
-    graph.insert({name: 'A', conflicts: ['B']});
-    graph.insert({name: 'B', conflicts: ['A'] });
-
+    const A = graph.insert({name: 'A', conflicts: ['B']});
+    const B = graph.insert({name: 'B', conflicts: ['A'] });
+    
+    graph.addEdge(A, B)
     const nodes = graph.getNodes();
 
     nodes.map(n => {
       expect(n.conflicts?.length).toBe(1);
     })
 
+    expect(checkRelationships(graph)).toBe(false);
+
   });
 
   // coherent - no option can depend, directly or indirectly, on another package and also be mutually exclusive with it.
   // mutually exclusive - implementing one will automatically rule out the other
   // I.e. if the above laws hold then the graph is coherent
-  test('the data structure should be coherent', () => {
+  test('the data structure should be coherent: ABC (conflicts: CD)', () => {
     const graph = makeRelationshipSet();
     const A = graph.insert({name: 'A'});
     const B = graph.insert({name: 'B'})
@@ -53,13 +56,29 @@ describe('Ruleset', () => {
     graph.addEdge(B, C);
 
     graph.insert({name: 'D', conflicts: ['C'] });
-    console.log(graph);
 
     expect(checkRelationships(graph)).toBe(true);
 
   });
 
-  test('should be incoherent', () => {
+  test('should be coherent: ABCA DE (conflicts: CE)', () => {
+    const graph = makeRelationshipSet();
+    const A = graph.insert({name: 'A'});
+    const B = graph.insert({name: 'B'});
+    const C = graph.insert({name: 'C', conflicts: ['E']});
+    const D = graph.insert({name: 'D'});
+    const E = graph.insert({name: 'E', conflicts: ['C']});
+
+    graph.addEdge(A, B);
+    graph.addEdge(B, C);
+    graph.addEdge(C, A);
+    graph.addEdge(D, E);
+
+    expect(checkRelationships(graph)).toBe(true);
+
+  });
+
+  test('should be incoherent: ABC (conflicts: CA)', () => {
     const graph = makeRelationshipSet();
     const A = graph.insert({name: 'A', conflicts: ['C']});
     const B = graph.insert({name: 'B'})
@@ -71,7 +90,32 @@ describe('Ruleset', () => {
     expect(checkRelationships(graph)).toBe(false);
   });
 
-  test('it should work for deep relationships', () => {
+  // // Deep dependencies
+// s = makeRelationshipSet();
+// s = dependsOn('a', 'b', s);
+// s = dependsOn('b', 'c', s);
+// s = dependsOn('c', 'd', s);
+// s = dependsOn('d', 'e', s);
+// s = dependsOn('a', 'f', s);
+// s = areExclusive('e', 'f', s);
+// console.assert(!checkRelationships(s));
+  test('deep relationships - should be incoherent for ABCDE AF (conflicts: FE)', () => {
+
+    const g = makeRelationshipSet();
+    const A = g.insert({name: 'A'});
+    const B = g.insert({name: 'B'});
+    const C = g.insert({name: 'C'});
+    const D = g.insert({name: 'D'});
+    const E = g.insert({name: 'E', conflicts: ['F']});
+    const F = g.insert({name: 'F', conflicts: ['E']});
+
+    g.addEdge(A, B);
+    g.addEdge(B, C);
+    g.addEdge(C, D);
+    g.addEdge(D, E);
+    g.addEdge(A, F);
+
+    expect(checkRelationships(g)).toBe(false);
 
   });
 
