@@ -12,12 +12,11 @@ This is a mini challenge which aims to mimic what popular package solutions such
 
 For this challenge I used a DAG (Directed Acyclic Graph) as the data structure for the packages with the conflicts of the package stored on each node. 
 
+![dag-example](https://user-images.githubusercontent.com/60711758/117587541-5ea1f000-b116-11eb-9403-6f08c0d4682b.png "Directed Acyclic Graph")
+
 ## Getting Started
 
 This project is intended to be used with the latest Active LTS release of [Node.js][nodejs].
-### Clone repository
-
-To clone the repository use the following commands:
 
 ```sh
 git clone https://github.com/Joshswooft/cautious-waffle.git
