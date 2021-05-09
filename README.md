@@ -1,54 +1,28 @@
-[![Sponsor][sponsor-badge]][sponsor]
+# Lifebit AI tech test
+
 [![TypeScript version][ts-badge]][typescript-4-2]
 [![Node.js version][nodejs-badge]][nodejs]
 [![APLv2][license-badge]][license]
 [![Build Status - Travis][travis-badge]][travis-ci]
 [![Build Status - GitHub Actions][gha-badge]][gha-ci]
 
-# node-typescript-boilerplate
+This is a mini challenge which aims to mimic what popular package solutions such as npm or yarn do. It handles being able to import all of the dependencies of a specific package(s) and is able to identify when a package or a nested package conflicts with another one.
 
-👩🏻‍💻 Developer Ready: A comprehensive template. Works out of the box for most [Node.js][nodejs] projects.
+## Data structure
 
-🏃🏽 Instant Value: All basic tools included and configured:
-
-- [TypeScript][typescript] [4.2][typescript-4-2]
-- [ESLint][eslint] with some initial rules recommendation
-- [Jest][jest] for fast unit testing and code coverage
-- Type definitions for Node.js and Jest
-- [Prettier][prettier] to enforce consistent code style
-- NPM [scripts](#available-scripts) for common operations
-- Simple example of TypeScript code and unit test
-- .editorconfig for consistent file format
-- Reproducible environments thanks to [Volta][volta]
-- Example configuration for [GitHub Actions][gh-actions] and [Travis CI][travis]
-
-🤲 Free as in speech: available under the APLv2 license.
+For this challenge I used a DAG (Directed Acyclic Graph) as the data structure for the packages with the conflicts of the package stored on each node. 
 
 ## Getting Started
 
 This project is intended to be used with the latest Active LTS release of [Node.js][nodejs].
-
-### Use as a repository template
-
-To start, just click the **[Use template][repo-template-action]** link (or the green button). Now start adding your code in the `src` and unit tests in the `__tests__` directories.
-
 ### Clone repository
 
 To clone the repository use the following commands:
 
 ```sh
-git clone https://github.com/jsynowiec/node-typescript-boilerplate
-cd node-typescript-boilerplate
+git clone https://github.com/Joshswooft/cautious-waffle.git
+cd cautious-waffle
 npm install
-```
-
-### Download latest release
-
-Download and unzip current `main` branch or one of tags:
-
-```sh
-wget https://github.com/jsynowiec/node-typescript-boilerplate/archive/main.zip -O node-typescript-boilerplate.zip
-unzip node-typescript-boilerplate.zip && rm node-typescript-boilerplate.zip
 ```
 
 ## Available Scripts
@@ -60,23 +34,75 @@ unzip node-typescript-boilerplate.zip && rm node-typescript-boilerplate.zip
 - `test` - run tests,
 - `test:watch` - interactive watch mode to automatically re-run tests
 
-## Additional Informations
+## Code test
 
-### Why include Volta
 
-[Volta][volta]’s toolchain always keeps track of where you are, it makes sure the tools you use always respect the settings of the project you’re working on. This means you don’t have to worry about changing the state of your installed software when switching between projects. For example, it's [used by engineers at LinkedIn][volta-tomdale] to standarize tools and have reproducible development environments.
+The idea behind this problem represents a common situation when dealing with software dependencies.
 
-I recommend to [install][volta-getting-started] Volta and use it to manage your project's toolchain.
+When you want to install a software package, sometimes the package might have dependencies with other software packages. This means that, for that package to be installed, the dependencies also need to be installed. For example, you cannot install a printing software package if you do not have certain fonts packages installed. (But you can have those font packages installed without the printing package.) If you want to select one software package, then all the dependencies have to also be selected.
 
-### Writing tests in JavaScript
+In another case, you might want to install a package that is in conflict with another package installation. You cannot have both installed at the same time. If you try to install one, the packages that are in conflict should be uninstalled.
 
-Writing unit tests in TypeScript can sometimes be troublesome and confusing. Especially when mocking dependencies and using spies.
+### Rule Sets
+Let's say we have a set of packages which the user can select to install. Packages can be related between them in two ways: one can depend on another, and two packages can be mutually exclusive. That means that these equalities must always hold true (note: this is not code, those are logical equations):
 
-This is **optional**, but if you want to learn how to write JavaScript tests for TypeScript modules, read the [corresponding wiki page][wiki-js-tests].
+"A depends on B", or "for A to be selected, B needs to be selected"
+```
+ruleSet.AddDep(A, B) =>
+if isSelected(A) then isSelected(B)
+```
+"A and B are exclusive", or "B and A are exclusive", or "for A to be selected, B needs to be unselected; and for B to be selected, A needs to be unselected"
+```
+ruleSet.AddConflict(A, B) <=> ruleSet.AddConflict(B, A) =>
+if isSelected(A) then !isSelected(B) && if isSelected(B) then !isSelected(A)
+```
+We say that a set of relations are coherent if the laws above are valid for that set. For example, this set of relations is coherent:
+```
+AddDep(A, B) // "A depends on B"
+AddDep(B, C) // "B depends on C"
+AddConflict(C, D) // "C and D are exclusive"
+```
+And these sets are not coherent:
+```
+AddDep(A, B)
+AddConflict(A, B)
+```
+A depends on B, so it's a contradiction that they are exclusive. If A is selected, then B would need to be selected, but that's impossible because, by the exclusion rule, both can't be selected at the same time.
+```
+AddDep(A, B)
+AddDep(B, C)
+AddConflict(A, C)
+```
+The dependency relation is transitive; it's easy to see, from the rules above, that if A depends on B, and B depends on C, then A also depends on C. So this is a contradiction for the same reason as the previous case.
 
-## Backers & Sponsors
+### Questions
+A.
 
-Support this project by becoming a [sponsor][sponsor].
+Write a data structure (RuleSet) for expressing these rules between packages, ie. for defining a rule set. You also need to define a constructor and 2 methods:
+```
+NewRuleSet(): Returns an empty rule set.
+RuleSet.AddDep(A, B): a method for rule sets that adds a new dependency A between and B.
+RuleSet.AddConflict(A, B): a method for rule sets that add a new conflict between A and B.
+```
+B.
+
+Implement the algorithm that checks that an instance of that data structure is coherent, that is, that no option can depend, directly or indirectly, on another package and also be mutually exclusive with it.
+
+```
+RuleSet.IsCoherent(): a method for rule sets that returns true if it is a coherent rule set, false otherwise.
+```
+
+C.
+
+Implement the algorithm that, given the rules between packages, a package, and a collection of selected packages coherent with the rules, adds the package to a collection of selected pacakges, or removes it from the collection if it is already there, selecting and deselecting pacakges automatically based on dependencies and exclusions.
+
+```
+New(rs): returns a new (empty) collection of selected packages (Pkgs) for the rule set rs.
+Pkgs.Toggle(p): a method for a collection of selected packages, to set or unset package p.
+Pkgs.StringSlice(): returns a slice of string with the current list of selected packages.
+```
+
+The algorithm for when a checkbox is selected is asked to you in section C, based on the data structures you define in section A. In section B you should provide an algorithm that 'tests' that sections A and C give a good solution.
 
 ## License
 
@@ -94,14 +120,9 @@ Licensed under the APLv2. See the [LICENSE](https://github.com/jsynowiec/node-ty
 [license-badge]: https://img.shields.io/badge/license-APLv2-blue.svg
 [license]: https://github.com/jsynowiec/node-typescript-boilerplate/blob/main/LICENSE
 [sponsor-badge]: https://img.shields.io/badge/♥-Sponsor-fc0fb5.svg
-[sponsor]: https://github.com/sponsors/jsynowiec
 [jest]: https://facebook.github.io/jest/
 [eslint]: https://github.com/eslint/eslint
-[wiki-js-tests]: https://github.com/jsynowiec/node-typescript-boilerplate/wiki/Unit-tests-in-plain-JavaScript
 [prettier]: https://prettier.io
-[volta]: https://volta.sh
-[volta-getting-started]: https://docs.volta.sh/guide/getting-started
-[volta-tomdale]: https://twitter.com/tomdale/status/1162017336699838467?s=20
 [gh-actions]: https://github.com/features/actions
 [travis]: https://travis-ci.org
-[repo-template-action]: https://github.com/jsynowiec/node-typescript-boilerplate/generate
+
