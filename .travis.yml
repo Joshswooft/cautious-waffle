@@ -15,8 +15,14 @@ before_install:
 
 install:
   - npm ci --no-audit
+  - npm install codecov -g
 
 script:
   - npm run lint --if-present
   - npm run test
   - npm run build --if-present
+
+language: node_js
+
+after_success:
+  - codecov
