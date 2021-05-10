@@ -9,9 +9,16 @@ describe('Package', () => {
     test('should return list of selected packages', () => {
         const p = new Package();
 
-        p.insert({name: 'A', selected: true});
-        p.insert({name: 'B', selected: false});
-        p.insert({name: 'C', selected: true});
+        const A = {name: 'A', selected: true}
+        const B = {name: 'B', selected: false}
+        const C = {name: 'C', selected: true}
+
+        p.insert(A);
+        p.insert(B);
+        p.insert(C);
+
+        p.addEdge(B.name, A.name);
+        p.addEdge(A.name, C.name);
 
         expect(p.StringSlice()).toMatchObject(['A', 'C']);
 

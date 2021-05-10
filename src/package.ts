@@ -18,7 +18,8 @@ export class Package extends DirectedGraph<NodeType> {
      * @returns a list of selected packages along with its dependencies
      */
     StringSlice(): string[] {
-        return this.getNodes().filter(n => n.selected === true).flatMap(n => this.getSubGraphStartingFrom(n.name).getNodes().map( no => no.name))
+        const selectedPackages = this.getNodes().filter((n, i) => n.selected === true && (this.indegreeOfNode(n.name) > 0 || i == 0)).flatMap(n => this.getSubGraphStartingFrom(n.name).getNodes().map( no => no.name))
+        return [... new Set(selectedPackages)];
     }
 
     /**

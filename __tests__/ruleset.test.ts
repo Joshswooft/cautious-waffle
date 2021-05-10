@@ -198,7 +198,6 @@ describe('Ruleset', () => {
        */
       rs.graph.Toggle(A);
       
-      console.log('received: ', rs.graph.StringSlice())
       expect(arraysEqual(rs.graph.StringSlice(), ['A', 'C', 'B'])).toBe(true);
 
     });
