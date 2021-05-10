@@ -5,6 +5,7 @@
 [![APLv2][license-badge]][license]
 [![Build Status - Travis][travis-badge]][travis-ci]
 [![Build Status - GitHub Actions][gha-badge]][gha-ci]
+[![codecov](https://codecov.io/gh/Joshswooft/cautious-waffle/branch/main/graph/badge.svg?token=6M8E8IYR6Y)](https://codecov.io/gh/Joshswooft/cautious-waffle)
 
 This is a mini challenge which aims to mimic what popular package solutions such as npm or yarn do. It handles being able to import all of the dependencies of a specific package(s) and is able to identify when a package or a nested package conflicts with another one.
 
@@ -124,4 +125,5 @@ Licensed under the APLv2. See the [LICENSE](https://github.com/Joshswooft/cautio
 [prettier]: https://prettier.io
 [gh-actions]: https://github.com/features/actions
 [travis]: https://travis-ci.org
+
 
