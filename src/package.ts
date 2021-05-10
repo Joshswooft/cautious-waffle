@@ -30,10 +30,6 @@ export class Package extends DirectedGraph<NodeType> {
      * 
      */
     Toggle(p: NodeType) {
-        /*
-         TODO: if the package is being selected then see if that will cause the graph to be incoherent
-         then remove the dependencies which are causing the conflicts
-         */
         const matched = this.getNodes().find(n => n.name === p.name);
         if (matched) {
             matched.selected = !matched.selected;
