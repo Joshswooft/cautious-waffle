@@ -1,8 +1,8 @@
 import { NodeType } from "./package";
 
 export function arraysEqual(a: string[], b: string[]): boolean {
-  var ka = a.sort();
-  var kb = b.sort();
+  const ka = a.sort();
+  const kb = b.sort();
   if (ka.length != kb.length) {
     console.log('A does not have the same length as B', {
       A_Length: a.length,
@@ -37,8 +37,8 @@ function compareNode(a: NodeType, b: NodeType) {
 }
 
 export function setsEqual(a: NodeType[], b: NodeType[]) {
-  var ka = a.sort(compareNodeType);
-  var kb = b.sort(compareNodeType);
+  const ka = a.sort(compareNodeType);
+  const kb = b.sort(compareNodeType);
   if (ka.length != kb.length) {
     return false;
   }

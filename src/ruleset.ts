@@ -35,7 +35,7 @@ export class RuleSet {
         const nodesWithConflicts = nodes.filter(n => n.conflicts?.length > 0);
         
         const allConflicts = nodesWithConflicts.flatMap(n => n.conflicts);
-        let coherent: boolean = true;
+        let coherent = true;
 
         if (allConflicts.length > 0) {
 
