@@ -31,32 +31,29 @@ export class RuleSet {
      * @returns whether the graph is coherent
      */
     IsCoherent(): boolean {
-        console.log('graph: ', this.graph);
         const nodes = this.graph.getNodes();
         const nodesWithConflicts = nodes.filter(n => n.conflicts?.length > 0);
         
-        /**
-         * we check that the nodes with conflicts can't reach each other in the graph
-         * i.e. if A is "selected" aka in the graph and has a conflict with B
-         * then A -> * -> B should not exist.
-         * 
-         */
+        const allConflicts = nodesWithConflicts.flatMap(n => n.conflicts);
+        let coherent: boolean = true;
+
+        if (allConflicts.length > 0) {
+
+            for (let i = 0; i < nodes.length; i++) {
+                // see if we can construct a path from the current node to ALL the conflicts
+                const node = nodes[i];
+                const sub = this.graph.getSubGraphStartingFrom(node.name);
     
-        // const allConflicts = nodesWithConflicts.flatMap(n => n.conflicts);
+                if (sub.isAcyclic()) {
+                    const res = allConflicts.every(c => (sub.canReachFrom(node.name, c) || node.name === c))
+                    if (res === true) {
+                        coherent = false;
+                        break;
+                    }
+                }
     
-        const coherent = nodesWithConflicts.every(node => {
-            const sub = this.graph.getSubGraphStartingFrom(node.name);
-    
-            if (sub.isAcyclic()) {
-                return node.conflicts.every(c => {
-                    const res = !sub.canReachFrom(node.name, c);
-                    return res;
-                })
             }
-    
-            return true;
-        })
-        console.log('coherent: ', coherent);
+        }
         return coherent;
     }
 }

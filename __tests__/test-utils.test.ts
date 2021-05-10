@@ -22,6 +22,13 @@ describe('test utils', () => {
 
             expect(arraysEqual(a, a)).toBe(true);
         })
+        test('two arrays are equal if they are defined in a different order', () => {
+            const a = ['1', '2', '3'];
+            const b = ['3', '2', '1'];
+            
+            expect(arraysEqual(a, b)).toBe(true);
+
+        })
     })
 
     describe('setsEqual', () => {
