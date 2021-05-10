@@ -12,7 +12,14 @@ export class RuleSet {
         this.graph.addEdge(a.name, b.name);
     }
 
+    // if a is selected then b is not selected also if b is selected then a is not selected
     AddConflict(a: NodeType, b: NodeType) {
+        if (a.selected) {
+            b.selected = false;
+        }
+        if (b.selected) {
+            a.selected = false;
+        }
         this.graph.upsert(a);
         this.graph.upsert(b);
     }

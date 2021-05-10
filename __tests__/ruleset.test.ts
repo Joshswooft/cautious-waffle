@@ -1,5 +1,6 @@
 import { NodeType } from "../src/package";
 import { RuleSet } from "../src/ruleset";
+import { arraysEqual, setsEqual } from "../src/test-utils";
 
 describe('Ruleset', () => {
   test('it should make an empty rule set', () => {
@@ -24,12 +25,13 @@ describe('Ruleset', () => {
   });
 
   // "for A to be selected, B needs to be unselected; and for B to be selected, A needs to be unselected"
-  test('should create a new conflict between A and B', () => {
+  test('should create a new conflict between A and B, and un-select the conflicting package', () => {
     const rs = new RuleSet();
-    const A: NodeType = {name: 'A', conflicts: ['B']};
-    const B: NodeType = {name: 'B', conflicts: ['A'] };
+    const A: NodeType = {name: 'A', conflicts: ['B'], selected: true};
+    const B: NodeType = {name: 'B', conflicts: ['A'], selected: true };
 
     rs.AddDep(A, B)
+    rs.AddConflict(A, B)
     
     const nodes = rs.graph.getNodes();
 
@@ -37,9 +39,31 @@ describe('Ruleset', () => {
       expect(n.conflicts?.length).toBe(1);
     })
 
+    expect(nodes.find(n => n.name === 'A').selected).toBe(true);
+    expect(nodes.find(n => n.name === 'B').selected).toBe(false);
+
     expect(rs.IsCoherent()).toBe(false);
 
   });
+
+  test('rs.AddConflict(A, B) is the same as rs.AddConflict(B, A)', () => {
+    const rs = new RuleSet();
+    const A: NodeType = {name: 'A', conflicts: ['B'], selected: true};
+    const B: NodeType = {name: 'B', conflicts: ['A'], selected: true };
+    
+    rs.AddConflict(A, B);
+
+    const s = new RuleSet();
+    s.AddConflict(B, A);
+
+    const rsNodes = rs.graph.getNodes();
+
+    const sNodes = s.graph.getNodes();
+
+    expect(setsEqual(rsNodes, sNodes)).toBe(true);
+
+    
+  })
 
   // coherent - no option can depend, directly or indirectly, on another package and also be mutually exclusive with it.
   // mutually exclusive - implementing one will automatically rule out the other
@@ -93,15 +117,6 @@ describe('Ruleset', () => {
     expect(rs.IsCoherent()).toBe(false);
   });
 
-  // // Deep dependencies
-// s = makeRelationshipSet();
-// s = dependsOn('a', 'b', s);
-// s = dependsOn('b', 'c', s);
-// s = dependsOn('c', 'd', s);
-// s = dependsOn('d', 'e', s);
-// s = dependsOn('a', 'f', s);
-// s = areExclusive('e', 'f', s);
-// console.assert(!checkRelationships(s));
   test('deep relationships - should be incoherent for ABCDE AF (conflicts: FE)', () => {
 
     const rs = new RuleSet();
@@ -118,15 +133,12 @@ describe('Ruleset', () => {
     rs.AddDep(D, E);
     rs.AddDep(A, F);
 
+    // this should be false because A -> F and A -> E is required but F-E is not allowed
     expect(rs.IsCoherent()).toBe(false);
 
   });
 
   describe('given the rules between packages, a package, and a collection of selected packages coherent with the rules', () => {
-
-    test('when toggled ON it should SET a package p for a collection of selected packages', () => {});
-
-    test('when toggled OFF it should UNSET a package p for a collection of selected packages', () => {});
 
     // because A is selected we have to include all its dependencies
     test('should return a list of current selected packages along with its dependencies', () => {
@@ -158,111 +170,39 @@ describe('Ruleset', () => {
       expect(rs.graph.StringSlice()).toMatchObject(['C']);
     });
 
+    test('should select the correct packages from multiple dependencies and exclusions', () => {
+      const rs = new RuleSet();
+      const A: NodeType = {name: 'A'};
+      const B: NodeType = {name: 'B', conflicts: ['D', 'E']};
+      const C: NodeType = {name: 'C'};
+      const D: NodeType = {name: 'D', conflicts: ['B']};
+      const E: NodeType = {name: 'E', conflicts: ['B']};
+
+
+      rs.AddDep(A, B);
+      rs.AddDep(A, C);
+
+      rs.graph.insert(D);
+      rs.graph.insert(E);
+
+      expect(rs.IsCoherent()).toBe(true);
+
+      // we activate D and E
+      rs.graph.Toggle(D);
+      rs.graph.Toggle(E);
+
+      /**
+       * Activating A causes D and E to become inactive 
+       * because B and D conflict along with B and E
+       * and A requires B and C
+       */
+      rs.graph.Toggle(A);
+      
+      console.log('received: ', rs.graph.StringSlice())
+      expect(arraysEqual(rs.graph.StringSlice(), ['A', 'C', 'B'])).toBe(true);
+
+    });
+
   });
 
 })
-
-// s = makeRelationshipSet();
-// s = dependsOn('a', 'a', s);
-// console.assert(checkRelationships(s));
-
-// s = makeRelationshipSet();
-// s = dependsOn('a', 'b', s);
-// s = dependsOn('b', 'a', s);
-// console.assert(checkRelationships(s));
-
-// s = makeRelationshipSet();
-// s = dependsOn('a', 'b', s);
-// s = areExclusive('a', 'b', s);
-// console.assert(!checkRelationships(s));
-
-// s = makeRelationshipSet();
-// s = dependsOn('a', 'b', s);
-// s = dependsOn('b', 'c', s);
-// s = areExclusive('a', 'c', s);
-// console.assert(!checkRelationships(s));
-
-// s = makeRelationshipSet();
-// s = dependsOn('a', 'b', s);
-// s = dependsOn('b', 'c', s);
-// s = dependsOn('c', 'a', s);
-// s = dependsOn('d', 'e', s);
-// s = areExclusive('c', 'e', s);
-// console.assert(checkRelationships(s));
-
-// // This function takes some arguments and returns a set of selected options.
-// // If needed, you should replace it with your own data structure.
-// function set() {
-//   var l = {};
-//   for (var i in arguments) {
-//     l[arguments[i]] = true;
-//   }
-//   return l;
-// }
-
-// // This function returns whether two sets of selected options have the same options selected.
-// // If needed, you should reimplement it for your own data structure.
-// function setsEqual(a, b) {
-//   var ka = Object.keys(a).sort();
-//   var kb = Object.keys(b).sort();
-//   if (ka.length != kb.length) {
-//     return false;
-//   }
-//   for (var i in ka) {
-//     if (kb[i] != ka[i]) {
-//       return false;
-//     }
-//   }
-//   return true;
-// }
-
-// selected = set();  // Or list, array, etc.
-
-// selected = toggle(selected, 'a', s);
-// console.assert(setsEqual(selected, set('a', 'c', 'b')));
-
-// s = dependsOn('f', 'f', s);
-// selected = toggle(selected, 'f', s);
-// console.assert(setsEqual(selected, set('a', 'c', 'b', 'f')));
-
-// selected = toggle(selected, 'e', s);
-// console.assert(setsEqual(selected, set('e', 'f')));
-
-// selected = toggle(selected, 'b', s);
-// console.assert(setsEqual(selected, set('a', 'c', 'b', 'f')));
-
-// s = dependsOn('b', 'g', s);
-// selected = toggle(selected, 'g', s);
-// selected = toggle(selected, 'b', s);
-// console.assert(setsEqual(selected, set('g', 'f')));
-
-// s = makeRelationshipSet();
-// s = dependsOn('a', 'b', s);
-// s = dependsOn('b', 'c', s);
-// selected = set();
-// selected = toggle(selected, 'c', s);
-// console.assert(setsEqual(selected, set('c')));
-
-// // Deep dependencies
-// s = makeRelationshipSet();
-// s = dependsOn('a', 'b', s);
-// s = dependsOn('b', 'c', s);
-// s = dependsOn('c', 'd', s);
-// s = dependsOn('d', 'e', s);
-// s = dependsOn('a', 'f', s);
-// s = areExclusive('e', 'f', s);
-// console.assert(!checkRelationships(s));
-
-// // Multiple dependencies and exclusions.
-
-// s = makeRelationshipSet();
-// s = dependsOn('a', 'b', s);
-// s = dependsOn('a', 'c', s);
-// s = areExclusive('b', 'd', s);
-// s = areExclusive('b', 'e', s);
-// console.assert(checkRelationships(s));
-// selected = set();
-// selected = toggle(selected, 'd', s);
-// selected = toggle(selected, 'e', s);
-// selected = toggle(selected, 'a', s);
-// console.assert(setsEqual(selected, set('a', 'c', 'b')));
